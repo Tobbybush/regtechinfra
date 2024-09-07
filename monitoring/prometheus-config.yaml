@@ -1,0 +1,81 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'kubernetes-nodes'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: '__meta_kubernetes_node_label_(.+)'
+
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - action: labelmap
+        regex: '__meta_kubernetes_pod_label_(.+)'
+  
+  - job_name: 'kubernetes-services'
+    kubernetes_sd_configs:
+      - role: service
+    relabel_configs:
+      - action: labelmap
+        regex: '__meta_kubernetes_service_label_(.+)'
+
+      - job_name: 'network-usage'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: '__meta_kubernetes_node_label_(.+)'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'container_network_.*'
+        action: keep
+
+  - job_name: 'application-metrics' 
+    static_configs:
+      - targets: ['regtech-app-service>:<metrics-port>']  
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'  # Alertmanager for handling alerts
+
+
+
+
+
+
+
+
+
+  - job_name: 'network-usage'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: '__meta_kubernetes_node_label_(.+)'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'container_network_.*'
+        action: keep
+
+  # Scraping Custom Application Metrics (if any)
+  - job_name: 'application-metrics'
+    static_configs:
+      - targets: ['<your-app-service>:<metrics-port>']
+  
+# Alerting rules to monitor metrics
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'  # Alertmanager for handling alerts
+
+# Define alert rules for CPU, memory, and service health
+rule_files:
+  - /etc/prometheus/rules/cpu-memory-alerts.yaml
+  - /etc/prometheus/rules/service-health-alerts.yaml

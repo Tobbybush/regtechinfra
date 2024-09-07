@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+data:
+  dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Kubernetes Cluster Monitoring",
+        "panels": [
+          {
+            "type": "graph",
+            "title": "CPU Usage",
+            "targets": [
+              {
+                "expr": "sum(rate(container_cpu_usage_seconds_total{container_name!=''}[1m]))",
+                "legendFormat": "{{container_name}}"
+              }
+            ]
+          },
+          {
+            "type": "graph",
+            "title": "Memory Usage",
+            "targets": [
+              {
+                "expr": "sum(container_memory_usage_bytes{container_name!=''})",
+                "legendFormat": "{{container_name}}"
+              }
+            ]
+          }
+        ]
+      }
+    }

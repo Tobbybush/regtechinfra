@@ -1,0 +1,130 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - stage
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/regtech-app:${{ github.sha }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/regtech-app:${{ github.sha }}
+
+      - name: Set Latest Tag for Docker Image
+        run: |
+          docker tag ${{ secrets.DOCKER_USERNAME }}/regtech-app:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/regtech-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/regtech-app:latest
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: 
+      build
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        
+      - name: Run Security Scan
+        run: |
+         docker run --rm my-security-tool ${DOCKER_IMAGE}
+        
+  deploy:
+    runs-on: ubuntu-latest
+    needs: 
+      security-scan
+        
+    strategy:
+        matrix:
+         environment:
+           - ${{ github.event.ref == 'refs/heads/dev' && 'dev' || github.event.ref == 'refs/heads/stage' && 'stage' || 'prod' }}
+    
+        
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        
+      - name: Set Up Kubernetes CLI
+        uses: azure/setup-kubectl@v1
+        
+      - name: Deploy to ${{ matrix.environment }} Environment
+        run: |
+         kubectl apply -f k8s/deployment-${{ matrix.environment }}.yaml
+         kubectl apply -f monitoring/prometheus-config.yaml
+         kubectl apply -f monitoring/grafana-dashboards.yaml
+
+#   deploy-dev:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     if: github.ref == 'refs/heads/dev'
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v2
+
+#       - name: Set Up Kubernetes CLI
+#         uses: azure/setup-kubectl@v1
+
+#       - name: Deploy to Dev Environment
+#         run: |
+#           kubectl apply -f k8s/deployment-dev.yaml --record
+
+#   deploy-stage:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     if: github.ref == 'refs/heads/stage'
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v2
+
+#       - name: Set Up Kubernetes CLI
+#         uses: azure/setup-kubectl@v1
+
+#       - name: Deploy to Stage Environment
+#         run: |
+#           kubectl apply -f k8s/deployment-stage.yaml --record
+
+#   deploy-prod:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     if: github.ref == 'refs/heads/prod'
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v2
+
+#       - name: Set Up Kubernetes CLI
+#         uses: azure/setup-kubectl@v1
+
+#       - name: Deploy to Prod Environment
+#         run: |
+#           kubectl apply -f k8s/deployment-prod.yaml --record
+
+  rollback:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+
+    steps:
+      - name: Rollback to Previous Version
+        run: |
+          kubectl rollout undo deployment/regtech-app-prod
