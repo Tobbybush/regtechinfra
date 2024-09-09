@@ -46,9 +46,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
         
-      - name: Run Security Scan
+      - name: Run Snyk Security Scan
         run: |
-         docker run --rm my-security-tool ${DOCKER_IMAGE}
+          docker run --rm -e SNYK_TOKEN=${{ secrets.SNYK_TOKEN }} snyk/snyk:docker test ${DOCKER_IMAGE}
+
         
   deploy:
     runs-on: ubuntu-latest
