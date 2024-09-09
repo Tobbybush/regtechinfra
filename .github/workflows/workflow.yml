@@ -48,7 +48,7 @@ jobs:
         
       - name: Run Snyk Security Scan
         run: |
-          docker run --rm -e SNYK_TOKEN=${{ secrets.SNYK_TOKEN }} snyk/snyk:docker test ${DOCKER_IMAGE}
+          docker run --rm -e SNYK_TOKEN=${{ secrets.SNYK_TOKEN }} snyk/snyk:docker-latest test ${DOCKER_IMAGE}
 
         
   deploy:
