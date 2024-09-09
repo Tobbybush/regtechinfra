@@ -4,7 +4,7 @@ metadata:
   name: regtech-app-secrets
   namespace: prod
 data:
-  db-password: {{ base64_encoded_password }}
+  db-password: <base64_encoded_password>
 type: Opaque
 apiVersion: apps/v1
 kind: Deployment
