@@ -23,12 +23,16 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: regtech-app-service
+  name: regtech-app-service-stage
+  namespace: dev
+  labels:
+    app: regtech-app
 spec:
   selector:
     app: regtech-app
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
-  type: LoadBalancer
+      targetPort: 3000
+  type: ClusterIP
+
