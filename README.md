@@ -40,11 +40,11 @@ Prometheus and Grafana are used to monitor the health of the application and inf
 - **network usage**
 - **service health**
 
-To access the dashboards:
+## To access the dashboards:
 Prometheus is available at http://<prometheus-url>:9090.
 Grafana is available at http://<grafana-url>:3000.
 
-Key Decisions
+## Key Decisions
 1. **Choice of Tools**
 - Terraform was chosen for its vast support across multiple cloud providers and modular design.
 - Kubernetes was selected for its flexibility, scalability, and native support for container orchestration.
@@ -53,4 +53,4 @@ Key Decisions
 - Encryption Overhead: Enabling encryption for all storage volumes and communication ensures data security.
 - Monitoring Costs: Running Prometheus and Grafana in the cloud incurs additional costs for storage and compute resources, but provides comprehensive monitoring capabilities.
 3. **Rollback Strategy**
-The decision to implement a rollback strategy in production ensures high availability
+The decision to implement a rollback strategy in production ensures high availability 
